@@ -1,19 +1,18 @@
 import express from 'express';
+import bodyParser from 'body-parser';
 
-let ETH_BALANCE = 200;
+let ETH_BALANCE = 100;
 let USDC_BALANCE = 1000;
 
 const app = express();
-
-app.use(express.json());
-
-// app.post("/add-liquidity", (req, res) => {
-
-// });
+app.use(bodyParser.json());
 
 app.post("/buy-assets", (req, res) => {
-    // Buy assets
-    const quantity = req.body.quantity;
+    const quantity = Number(req.body.quantity);
+    if (isNaN(quantity) || quantity <= 0 || quantity > ETH_BALANCE) {
+        return res.status(400).json({ message: "Invalid quantity" });
+    }
+
     const updatedEthQuantity = ETH_BALANCE - quantity;
     const updatedUsdcBalance = ETH_BALANCE * USDC_BALANCE / updatedEthQuantity;
     const paidAmount = updatedUsdcBalance - USDC_BALANCE;
@@ -22,28 +21,30 @@ app.post("/buy-assets", (req, res) => {
     USDC_BALANCE = updatedUsdcBalance;
 
     res.json({
-        message: `you paid ${paidAmount} USDC and bought ${quantity} ETH`,
+        message: `You paid ${paidAmount} USDC and bought ${quantity} ETH`,
     });
 });
 
 app.post("/sell-assets", (req, res) => {
-    // Sell assets
-    const quantity = req.body.quantity;
-    const updatedUsdcBalance = ETH_BALANCE - quantity;
-    const updatedEthQuantity = ETH_BALANCE * USDC_BALANCE / updatedUsdcBalance;
-    const paidAmount = updatedEthQuantity - ETH_BALANCE;
+    const quantity = Number(req.body.quantity);
+    if (isNaN(quantity) || quantity <= 0 || quantity > ETH_BALANCE) {
+        return res.status(400).json({ message: "Invalid quantity" });
+    }
+
+    const updatedEthQuantity = ETH_BALANCE + quantity;
+    const updatedUsdcBalance = ETH_BALANCE * USDC_BALANCE / updatedEthQuantity;
+    const gottenUSDC = USDC_BALANCE - updatedUsdcBalance;
 
     ETH_BALANCE = updatedEthQuantity;
     USDC_BALANCE = updatedUsdcBalance;
 
     res.json({
-        message: `you paid ${paidAmount} USDC and bought ${quantity} ETH`,
+        message: `You sold ${quantity} ETH and received ${gottenUSDC} USDC`,
     });
 });
 
 app.post("/quote", (req, res) => {
-    // Get quote
-    res.json({ message: "quote" });
+  
 });
 
 app.listen(3000, () => {
